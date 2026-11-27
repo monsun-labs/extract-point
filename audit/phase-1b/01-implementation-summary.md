@@ -4,7 +4,8 @@
 **Date:** 2026-11-27  
 **Working branch:** `monsun/phase-1b-extract-point-stabilization`  
 **Worktree:** `C:\Users\yothu\tyo\monsun.io\monsun-labs\extract-point-phase-1b`  
-**Baseline commit:** `70065526f034f3350c249b227c73b2987c39e7be` (local `main`)
+**Baseline commit:** `70065526f034f3350c249b227c73b2987c39e7be` (local `main`)  
+**Implementation tip:** `b14755a6c32709673b874e4a7bfb4ae127a37131`
 
 ---
 

@@ -1,7 +1,8 @@
 # 05 — Phase 1B Final Report
 
 **Date:** 2026-11-27  
-**Overall verdict:** **PARTIAL — IMPLEMENTATION / VERIFICATION LIMITATIONS**
+**Overall verdict:** **PARTIAL — IMPLEMENTATION / VERIFICATION LIMITATIONS**  
+**Working tip:** `b14755a6c32709673b874e4a7bfb4ae127a37131` on `monsun/phase-1b-extract-point-stabilization`
 
 Implementation of the stabilized Monsun-branded main-line tutorial on an isolated branch is done, with **10/10 controlled tests passing**. Full notebook runtime and website/publish steps were intentionally out of scope; LICENSE copyright remains unresolved. Therefore the honest verdict is **PARTIAL**, not COMPLETE.
 
