@@ -21,3 +21,8 @@ data/era5_benchmark_10yr.nc
 !data/benchmark/*.csv
 !data/benchmark/*.png
 !data/download_area.png
+# Phase 1B local verification artifacts
+audit/phase-1b/_runtime_out/
+audit/phase-1b/_runtime_results.json
+audit/phase-1b/_*.py
+
