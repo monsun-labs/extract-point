@@ -119,7 +119,7 @@ def save_results(
     *,
     csv_path: Path,
     png_path: Path,
-    title: str = "Point Extraction Benchmark\nNusawave Labs · extract-point",
+    title: str = "Point Extraction Benchmark\nMonsun Labs · extract-point",
 ) -> None:
     import pandas as pd
 
@@ -202,7 +202,7 @@ def main() -> None:
         lat_dim=args.lat_dim,
         lon_dim=args.lon_dim,
     )
-    title = args.title or f"Point Extraction Benchmark — {data_path.name}\nNusawave Labs · extract-point"
+    title = args.title or f"Point Extraction Benchmark — {data_path.name}\nMonsun Labs · extract-point"
     save_results(results, csv_path=args.csv, png_path=args.png, title=title)
 
 

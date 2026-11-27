@@ -1,6 +1,6 @@
 # ERA5 sample data
 
-`data/era5_sample.nc` is a **pre-sliced file** for the tutorial (~120 MB, 1 year (2024), 20×20 grid around Natuna Sea).
+`data/era5_sample.nc` is the **Release tutorial sample** (~118 MB). It is **not** committed to git.
 
 The notebook opening line (*"You downloaded ERA5. It's 2.3 GB"*) describes the **naive mistake** people make with full global downloads — not this file.
 
@@ -9,7 +9,13 @@ The notebook opening line (*"You downloaded ERA5. It's 2.3 GB"*) describes the *
 Google Colab does not pull Git LFS assets automatically. The notebook bootstrap cell downloads the sample from a **GitHub Release**:
 
 ```
-https://github.com/nusawave-labs/extract-point/releases/download/v0.1-data/era5_sample.nc
+https://github.com/monsun-labs/extract-point/releases/download/v0.1-data/era5_sample.nc
+```
+
+SHA-256:
+
+```
+f11e80d5e7a7769ff26f19ebf2f842839afa3a801f750c32cbbb341b52e1aab4
 ```
 
 **Maintainers:** after updating `era5_sample.nc`, publish a new release asset (or bump the tag) and update `ERA5_SAMPLE_URL` in the notebook bootstrap cell.
@@ -18,17 +24,45 @@ https://github.com/nusawave-labs/extract-point/releases/download/v0.1-data/era5_
 gh release create v0.1-data data/era5_sample.nc --title "Tutorial sample data" --notes "ERA5 sample for extract-point Colab tutorial"
 ```
 
-## Sample file spec
+## Sample file spec (verified from Release asset metadata)
+
+Inspected with `netCDF4` against the local copy of `v0.1-data` / `era5_sample.nc` (SHA-256 match).
 
 | Setting | Value |
 |---------|-------|
-| Location | 4°N, 108°E (Natuna Sea platform) |
-| Grid | 20 × 20 points at 0.5° (~9.5° × 9.5° box) |
-| Time | 2024 (1 year), hourly |
-| Variables | swh, tp, mwd, shts, mdts, mpts, u10, v10 |
-| Size | ~120 MB uncompressed (~12 CDS jobs) |
+| Format | NetCDF4 |
+| Location focus | 4°N, 108°E (Natuna Sea) — exact grid point present |
+| Coordinate grid | **39 × 39** points; median step **0.25°** |
+| Latitude range | −0.75° to 8.75° (array increasing; `units=degrees_north`) |
+| Longitude range | 103.25° to 112.75° (`units=degrees_east`, 0–360 style regional slice) |
+| Time | 8784 hourly steps, `seconds since 1970-01-01` covering **2024-01-01 → 2024-12-31** |
+| Data variables | `u10`, `v10`, `swh`, `tp`, `mwd`, `shts`, `mdts`, `mpts` |
+| Size | 118,466,500 bytes (~118 MB) |
 
-CDS enforces a **per-request cost limit**. The download script fetches **one month at a time** and merges the result.
+### Units and long names (from variable attributes)
+
+| Variable | `long_name` (attr) | `units` (attr) |
+|----------|--------------------|----------------|
+| `swh` | Significant height of combined wind waves and swell | `m` |
+| `tp` | Peak wave period | `s` |
+| `mwd` | Mean wave direction | `Degree true` |
+| `shts` | Significant height of total swell | `m` |
+| `mdts` | Mean direction of total swell | `degrees` |
+| `mpts` | Mean period of total swell | `s` |
+| `u10` | 10 metre U wind component | `m s**-1` |
+| `v10` | 10 metre V wind component | `m s**-1` |
+
+Missing values: `_FillValue = nan` on data variables; GRIB also records a large numeric missing sentinel.
+
+### Native GRIB grid notes (metadata only)
+
+Wind variables (`u10`/`v10`) carry GRIB increment metadata of **0.25°**. Wave variables (`swh`, `tp`, …) carry GRIB increment metadata of **0.5°** and smaller native `Nx`/`Ny`, but in this file they are stored on the shared 39×39 lat/lon dimensions. Treat **file coordinates (0.25°, 39×39)** as authoritative for indexing; treat GRIB 0.5° as information about ERA5 wave native spacing, not as the array shape in this sample.
+
+### Doc drift warning
+
+Older docs and `scripts/download_era5.py` defaults (`DEFAULT_GRID_POINTS=20`, `GRID_SPACING_DEG=0.5`) describe a **different** regenerate recipe than the published `v0.1-data` asset. Regenerating with current script defaults will **not** reproduce this Release file’s dimensions. Prefer the Release asset for the tutorial.
+
+Hard-coded global indices such as `latitude=42` / `longitude=864` are **out of range** for this sample (`idx_42_ok=False`, `idx_864_ok=False`). Always derive indices from coordinates.
 
 ## Pre-computed benchmarks
 
@@ -56,10 +90,10 @@ key: YOUR_UID:YOUR_API_KEY
 
 ```bash
 pip install -r requirements.txt
-python3 scripts/download_era5.py   # 1 yr, 20×20 grid → 12 monthly jobs
+python3 scripts/download_era5.py   # current defaults may differ from v0.1-data shape
 ```
 
-Commit the updated `data/era5_sample.nc` to a [GitHub Release](https://github.com/nusawave-labs/extract-point/releases) (not git — avoids Git LFS). Colab downloads from the release URL; local clones use `scripts/download_era5.py` or wget.
+Publish the updated file to a [GitHub Release](https://github.com/monsun-labs/extract-point/releases) (not git — avoids Git LFS). Update the documented SHA-256 and grid table after any new asset.
 
 ## Custom local downloads
 
@@ -70,12 +104,6 @@ python3 scripts/download_era5.py --sample   # 1 month, 5×5 — quick test
 python3 scripts/download_era5.py --benchmark  # 10 yr maintainer benchmark file
 ```
 
-## Variables
+## Attribution
 
-- **swh** — significant wave height, combined wind sea + swell (m)
-- **tp** — peak wave period (s)
-- **mwd** — mean wave direction, direction waves travel toward (° from north)
-- **shts** — significant height of total swell (m)
-- **mdts** — mean direction of total swell (° from north)
-- **mpts** — mean period of total swell (s)
-- **u10 / v10** — 10 m wind components (m/s)
+ERA5 data: © ECMWF / Copernicus Climate Change Service. Access via the [Climate Data Store](https://cds.climate.copernicus.eu/). Users must accept the CDS licence terms for any CDS download.

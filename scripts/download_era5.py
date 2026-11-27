@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
 """
-Regenerate the repo sample ERA5 file via the Copernicus Climate Data Store (CDS).
+Maintainer tool: download ERA5 NetCDF slices via the Copernicus Climate Data Store (CDS).
 
-The committed sample (data/era5_sample.nc) is a small slice for GitHub + Colab.
-The notebook's "2.3 GB" scenario is illustrative — CDS rejects oversized single requests
-("cost limits exceeded"). Full-year downloads are split into one CDS job per month.
+IMPORTANT — tutorial learners should NOT run this script.
+The Colab/local tutorial uses the published GitHub Release asset:
+  https://github.com/monsun-labs/extract-point/releases/tag/v0.1-data
+  (era5_sample.nc ≈ 118 MB, calendar year 2024, 39×39 @ 0.25° file coordinates)
+
+Default CLI settings here intentionally target a *different* regenerate recipe
+(1 year ending 2024, ~20×20 points at 0.5° wave spacing). That output will NOT
+byte-match or dimension-match the Release teaching sample. See data/README.md.
+
+The notebook's "2.3 GB" story is illustrative — CDS rejects oversized single
+requests ("cost limits exceeded"). Full-year downloads are split into one CDS
+job per month.
 
 Setup (one time):
   1. Register at https://cds.climate.copernicus.eu/
@@ -13,9 +22,11 @@ Setup (one time):
        url: https://cds.climate.copernicus.eu/api
        key: <UID>:<API-KEY>
 
-Usage:
+Usage (maintainers only; requires CDS credentials + network):
   python3 scripts/download_era5.py
   python3 scripts/download_era5.py --year 2020 --month 01 --grid 5
+  python3 scripts/download_era5.py --sample      # tiny smoke test
+  python3 scripts/download_era5.py --benchmark   # large optional file
 """
 
 from __future__ import annotations
@@ -315,7 +326,10 @@ def download(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Regenerate data/era5_sample.nc for the extract-point tutorial.",
+        description=(
+            "Maintainer CDS downloader. Defaults produce a 0.5°/~20×20 regenerate "
+            "recipe — not an identical rebuild of Release v0.1-data (39×39 @ 0.25°)."
+        ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
