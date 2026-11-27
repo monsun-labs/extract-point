@@ -71,7 +71,7 @@ def generate_era5_large(data_path: Path | None, out_dir: Path) -> None:
         png_path=out_dir / "era5_large_benchmark.png",
         title=(
             f"Point Extraction Benchmark — ERA5 ({size_gb:.1f} GB)\n"
-            f"Natuna Sea · 20×20 grid · Nusawave Labs"
+            f"Natuna Sea · teaching sample · Monsun Labs"
         ),
     )
 
