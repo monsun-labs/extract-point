@@ -2,7 +2,8 @@
 
 **Date:** 2026-11-27  
 **Prior reports retained:** `01`–`05` (historical); this report **supersedes** the PARTIAL runtime gap in `05`.  
-**Branch:** `monsun/phase-1b-extract-point-stabilization`
+**Branch:** `monsun/phase-1b-extract-point-stabilization`  
+**Completion tip:** `86f5cafe8abc65d14c9a259c687e911d6e519941`
 
 ---
 
