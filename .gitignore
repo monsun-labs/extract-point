@@ -26,3 +26,6 @@ audit/phase-1b/_runtime_out/
 audit/phase-1b/_runtime_results.json
 audit/phase-1b/_*.py
 
+# labs-publish converter staging
+labs-publish/out/
+
