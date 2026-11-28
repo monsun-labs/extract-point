@@ -1,0 +1,44 @@
+# Monsun Labs publish contract — Extract Point
+# Consumed by labs-publish/convert_notebook.py (no notebook execution).
+
+schema_version: 1
+
+slug: extract-point
+title: Point Extraction
+nav_label: Point Extraction
+summary: >-
+  Extract Hs, Tp, and wind speed at any location from ERA5 — reading a tiny
+  fraction of the data, not the full grid.
+status: early
+
+repo_url: https://github.com/monsun-labs/extract-point
+colab_url: >-
+  https://colab.research.google.com/github/monsun-labs/extract-point/blob/main/notebooks/extract_point.ipynb
+notebook_path: notebooks/extract_point.ipynb
+
+sample_data:
+  release_tag: v0.1-data
+  asset: era5_sample.nc
+  sha256: f11e80d5e7a7769ff26f19ebf2f842839afa3a801f750c32cbbb341b52e1aab4
+  size_bytes: 118466500
+  grid: 39x39
+  resolution_deg: 0.25
+  period: "2024-01-01/2024-12-31"
+
+# Relative to tutorial repo root. Copied into website media/ beside extracted outputs.
+media:
+  - path: data/benchmark/era5_large_benchmark.png
+    dest: era5_large_benchmark.png
+    alt: Pre-computed large-file benchmark chart
+  - path: data/download_area.png
+    dest: download_area.png
+    alt: ERA5 sample download domain
+
+website:
+  docs_relpath: docs/tutorials/extract-point
+  media_dirname: media
+  generated_body: body.md
+  landing_index: index.md
+  # Pilot: keep curated website index.md; publish body.md + media only.
+  # Set true only when the notebook landing fully replaces the curated page.
+  replace_index: false

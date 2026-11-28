@@ -1,0 +1,23 @@
+# Convert committed notebook → open/update PR on monsun-labs.github.io.
+# Never merges. Never deploys. Policy A authors; Policy B reviews website PR.
+name: Labs publish
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    # Fork PRs / untrusted events must not receive publish credentials.
+    if: github.event_name != 'pull_request'
+    uses: monsun-labs/monsun-labs.github.io/.github/workflows/labs-publish-reusable.yml@main
+    with:
+      tutorial_repository: ${{ github.repository }}
+      tutorial_ref: ${{ github.sha }}
+      manifest_path: labs-publish/manifest.yaml
+    secrets:
+      PUBLISH_TOKEN: ${{ secrets.LABS_PUBLISH_TOKEN }}
