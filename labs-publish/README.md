@@ -43,5 +43,8 @@ fine-grained PAT owned by tyorus is an interim option). See website
 - Source of truth remains the `.ipynb` with committed outputs.
 - No `--execute` / ExecutePreprocessor.
 - Only media paths listed in the manifest are copied.
+- Allowlisted media with `inject: true` get Markdown image refs when nbconvert
+  did not emit one (covers `Image(filename=...)` cells without committed MIME).
+- Conversion fails if any local `media/` reference does not resolve to a file.
 - Website PRs are opened by automation; humans merge (Policy B).
 - Pilot keeps curated website `index.md` (`replace_index: false`).
