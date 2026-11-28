@@ -52,8 +52,9 @@ def _load_manifest(path: Path) -> dict:
     return data
 
 
-def _validate_media(repo: Path, media: list[dict]) -> list[tuple[Path, str, str]]:
-    items: list[tuple[Path, str, str]] = []
+def _validate_media(repo: Path, media: list[dict]) -> list[dict]:
+    """Return allowlisted media descriptors: src, dest, alt, inject, match."""
+    items: list[dict] = []
     for entry in media or []:
         rel = entry.get("path")
         dest = entry.get("dest")
@@ -64,11 +65,19 @@ def _validate_media(repo: Path, media: list[dict]) -> list[tuple[Path, str, str]
             raise SystemExit(f"media path escapes repo root: {rel}")
         if not src.is_file():
             raise SystemExit(f"media file missing: {rel}")
-        # Reject path traversal in dest
         dest_name = Path(dest).name
         if dest_name != dest or ".." in dest:
             raise SystemExit(f"media dest must be a plain filename: {dest}")
-        items.append((src, dest_name, entry.get("alt", "")))
+        items.append(
+            {
+                "src": src,
+                "dest": dest_name,
+                "alt": entry.get("alt") or dest_name,
+                "inject": bool(entry.get("inject", True)),
+                # Substring used to locate the related code cell in generated MD.
+                "match": entry.get("match") or Path(rel).name,
+            }
+        )
     return items
 
 
@@ -174,7 +183,7 @@ def _rewrite_repo_relative_links(markdown: str, repo_url: str, notebook_path: st
         label, target = match.group(1), match.group(2)
         if re.match(r"^[a-z]+://", target) or target.startswith("#") or target.startswith("/"):
             return match.group(0)
-        if target.startswith("media/"):
+        if target.startswith("media/") or target.startswith("../media/"):
             return match.group(0)
         # Resolve relative to notebook directory, then normalize
         resolved = Path(nb_dir, target).as_posix()
@@ -184,6 +193,64 @@ def _rewrite_repo_relative_links(markdown: str, repo_url: str, notebook_path: st
         return f"[{label}]({base}{resolved})"
 
     return re.sub(r"\[([^\]]+)\]\(([^)]+)\)", repl, markdown)
+
+
+def _local_image_refs(markdown: str, media_dirname: str) -> list[str]:
+    """Return media filenames referenced by local Markdown image/link targets."""
+    pattern = rf"\((?:\.\./)?{re.escape(media_dirname)}/([^)\s]+)\)"
+    return [Path(m).name for m in re.findall(pattern, markdown)]
+
+
+def _inject_allowlisted_media_refs(
+    markdown: str,
+    media_items: list[dict],
+    media_dirname: str,
+) -> str:
+    """Insert Markdown image refs for allowlisted files that lack committed outputs.
+
+    nbconvert only extracts display_data/execute_result images. Cells that use
+    ``Image(filename=...)`` without committed image MIME data need an explicit
+    ref once the file has been copied into media/.
+    """
+    existing = set(_local_image_refs(markdown, media_dirname))
+    result = markdown
+    for item in media_items:
+        if not item["inject"]:
+            continue
+        dest = item["dest"]
+        if dest in existing:
+            continue
+        needle = item["match"]
+        img_md = f"\n\n![{item['alt']}]({media_dirname}/{dest})\n"
+        # Prefer placing after the first fenced block that mentions the asset.
+        fence_pat = re.compile(
+            rf"(```[^\n]*\n[\s\S]*?{re.escape(needle)}[\s\S]*?```)",
+        )
+        m = fence_pat.search(result)
+        if m:
+            insert_at = m.end()
+            result = result[:insert_at] + img_md + result[insert_at:]
+            existing.add(dest)
+            continue
+        # Fallback: append under a generated figures section once.
+        if "## Published figures" not in result:
+            result += "\n\n## Published figures\n"
+        result += img_md
+        existing.add(dest)
+    return result
+
+
+def _validate_image_refs_resolve(
+    markdown: str,
+    media_out: Path,
+    media_dirname: str,
+) -> list[str]:
+    """Return dangling local media references (must be empty)."""
+    missing: list[str] = []
+    for name in _local_image_refs(markdown, media_dirname):
+        if not (media_out / name).is_file():
+            missing.append(name)
+    return missing
 
 
 def convert(
@@ -233,8 +300,8 @@ def convert(
         target.write_bytes(data)
 
     # Copy allowlisted static media
-    for src, dest_name, _alt in media_items:
-        shutil.copy2(src, media_out / dest_name)
+    for item in media_items:
+        shutil.copy2(item["src"], media_out / item["dest"])
 
     body = _rewrite_image_links(body, media_dirname)
     body = _rewrite_repo_relative_links(
@@ -243,10 +310,19 @@ def convert(
         str(manifest["notebook_path"]),
     )
 
-    # Rewrite Image(filename=...) display leftovers if any bare filenames appear
-    for _src, dest_name, _alt in media_items:
-        # Prefer media/dest when body mentions dest basename
+    # Prefer media/dest when body mentions dest basename as a bare link target
+    for item in media_items:
+        dest_name = item["dest"]
         body = body.replace(f"]({dest_name})", f"]({media_dirname}/{dest_name})")
+
+    body = _inject_allowlisted_media_refs(body, media_items, media_dirname)
+
+    missing = _validate_image_refs_resolve(body, media_out, media_dirname)
+    if missing:
+        raise SystemExit(
+            "Generated Markdown references missing media files: "
+            + ", ".join(sorted(set(missing)))
+        )
 
     body_path = out_dir / body_name
     body_path.write_text(body, encoding="utf-8")
@@ -258,12 +334,14 @@ def convert(
 
     # Provenance sidecar
     digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
+    referenced = sorted(set(_local_image_refs(body, media_dirname)))
     provenance = {
         "slug": manifest["slug"],
         "git_sha": git_sha,
         "notebook": str(manifest["notebook_path"]),
         "body_sha256": digest,
         "media_files": sorted(p.name for p in media_out.iterdir() if p.is_file()),
+        "media_referenced": referenced,
         "executed": False,
         "replace_index": replace_index,
     }

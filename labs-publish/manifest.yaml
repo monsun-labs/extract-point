@@ -26,13 +26,19 @@ sample_data:
   period: "2024-01-01/2024-12-31"
 
 # Relative to tutorial repo root. Copied into website media/ beside extracted outputs.
+# inject=true inserts a Markdown image ref when nbconvert did not emit one
+# (typical for Image(filename=...) cells without committed display_data).
 media:
   - path: data/benchmark/era5_large_benchmark.png
     dest: era5_large_benchmark.png
     alt: Pre-computed large-file benchmark chart
+    inject: true
+    match: era5_large_benchmark.png
   - path: data/download_area.png
     dest: download_area.png
-    alt: ERA5 sample download domain
+    alt: ERA5 sample download domain around Natuna Sea
+    inject: true
+    match: download_area.png
 
 website:
   docs_relpath: docs/tutorials/extract-point
